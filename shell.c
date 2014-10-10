@@ -12,26 +12,46 @@ int main()
 		print_prompt();
 		char* input[64];
 		scan_input(input);
+		int input_len = array_len(input);
+		int option = 0;
+
+		// if last parameter is an & then run child process in background.
+		/*if (input_len != 0 && !strcmp(input[input_len], "&"))
+		{
+			option = 1;
+			input[input_len] = NULL;
+		}*/
 
 		/* pass to change_directory if input is a cd command.
 		   Else perform a fork and process input. */
-		if (!strcmp(input[0], "cd"))
+		if (input_len != 0 && !strcmp(input[0], "cd"))
 		{
 			change_directory(input);
 		}
-		else if (fork() != 0)
+		else if (input_len != 0 && fork() != 0)
 		{
 			// code for parent process.
 			int statloc;
-			process_parent(&statloc);
+			process_parent(&statloc, option);
 		}
-		else
+		else if (input_len != 0)
 		{
 			// code for forked child process.
 			process_child(input);
 		}
 
 	}
+}
+
+// function that calculates length of array till NULL is encountered.
+int array_len(const char** input)
+{
+	int count = 0;
+	for (int i = 0; input[i] != NULL; i++)
+	{
+		count++;
+	}
+	return count;
 }
 
 // function for printing the prompt on the console.
@@ -61,9 +81,12 @@ void scan_input(char** input)
 }
 
 // function to be called if this is parent process.
-void process_parent(int* statloc)
+void process_parent(int* statloc, int option)
 {
-	waitpid(-1, statloc, 0);
+	if (!option)
+	{
+		waitpid(-1, statloc, 0);
+	}
 }
 
 // function to be called if this is child process.
