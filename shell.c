@@ -46,7 +46,8 @@ void scan_input(char** input)
 	fgets(text, 256, stdin);
 	text[strlen(text) - 1] = '\0';
 	char* token = strtok(text, " ");
-	for (int i = 0; token != NULL; i++)
+	int i = 0;
+	for (; token != NULL; i++)
 	{
 		input[i] = (char*) malloc(sizeof(char) * strlen(token));
 		strcpy(input[i], token);
@@ -64,5 +65,15 @@ void process_parent(int* statloc)
 // function to be called if this is child process.
 void process_child(const char** input)
 {
+	// try in working directory
 	execve(input[0], input, NULL);
+	
+	char file_name[strlen(input[0])];
+	strcpy(file_name, input[0]);
+	
+	// try in /bin
+	char path[strlen(file_name) + 6];
+	strcpy(path, "/bin/"); 
+	strcat(path, file_name);
+	execve(path, input, NULL);
 }
