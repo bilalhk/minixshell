@@ -1,15 +1,16 @@
 // Simple shell for Linux.
 
 #include <stdio.h>
+#include <string.h>
 #define TRUE 1
 
 int main()
 {
 	while (TRUE)
 	{
-		// print prompt and read into string input.
+		// print prompt and read into string array input.
 		print_prompt();
-		char input[256];
+		char* input[64];
 		scan_input(input);
 
 		// perform a fork and process input.
@@ -37,9 +38,21 @@ void print_prompt()
 	printf("%s>> ", dir);
 }
 
-void scan_input(char* input)
+// read input from the terminal, tokenize it, allocate memory for each token on heap,
+// and store pointers to tokens in char*[] input.
+void scan_input(char** input)
 {
-	scanf("%s", input);
+	char text[256];
+	fgets(text, 256, stdin);
+	text[strlen(text) - 1] = '\0';
+	char* token = strtok(text, " ");
+	for (int i = 0; token != NULL; i++)
+	{
+		input[i] = (char*) malloc(sizeof(char) * strlen(token));
+		strcpy(input[i], token);
+		token = strtok(NULL, " ");
+	}
+	input[i] = NULL;
 }
 
 // function to be called if this is parent process.
@@ -49,7 +62,7 @@ void process_parent(int* statloc)
 }
 
 // function to be called if this is child process.
-void process_child(const char* input)
+void process_child(const char** input)
 {
-	execve(input, NULL, NULL);
+	execve(input[0], input, NULL);
 }
