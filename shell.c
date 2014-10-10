@@ -13,9 +13,13 @@ int main()
 		char* input[64];
 		scan_input(input);
 
-		// perform a fork and process input.
-		int pid = fork();
-		if (pid != 0)
+		/* pass to change_directory if input is a cd command.
+		   Else perform a fork and process input. */
+		if (!strcmp(input[0], "cd"))
+		{
+			change_directory(input);
+		}
+		else if (fork() != 0)
 		{
 			// code for parent process.
 			int statloc;
@@ -68,12 +72,41 @@ void process_child(const char** input)
 	// try in working directory
 	execve(input[0], input, NULL);
 	
-	char file_name[strlen(input[0])];
-	strcpy(file_name, input[0]);
+	char path[strlen(input[0]) + 12];
 	
 	// try in /bin
-	char path[strlen(file_name) + 6];
 	strcpy(path, "/bin/"); 
-	strcat(path, file_name);
+	strcat(path, input[0]);
 	execve(path, input, NULL);
+
+	// try in /usr/bin
+	strcpy(path, "/usr/bin/");
+	strcat(path, input[0]);
+	execve(path, input, NULL);
+}
+
+// function for changing the working directory to the path specified by the cd command.
+void change_directory(const char** input)
+{
+	char cwd[128];
+	getcwd(cwd, sizeof(char) * 128);
+
+	/* if the cd command is .. then go up a level. If relative path provided go down.
+	   Else change to absolute path provided. */
+	if (!strcmp(input[1], ".."))
+	{
+		char* path_end = strrchr(cwd, '/');
+		*path_end = '\0';
+		chdir(cwd);
+	}
+	else if (input[1][0] != '/')
+	{
+		strcat(cwd, "/");
+		strcat(cwd, input[1]);
+		chdir(cwd);
+	}
+	else
+	{
+		chdir(input[1]);
+	}
 }
